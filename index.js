@@ -38,5 +38,43 @@ app.post('/', async (req, res) => {
   }
 });
 
+app.post('/album', async (req, res) => {
+  try {
+    const page = await fetch(req.body.albumUrl)
+      .then((res) => res.text())
+      .then((body) => body);
+    const $ = cheerio.load(page);
+    if ($('body').find('#bodyContent').length) {
+      const songs = $('.player-inline')
+        .map((i, elem) => {
+          const playId = $(elem).find('div.play').attr('id');
+
+          const url =
+            'https://myzuka.club' + $(elem).find('span.ico').attr('data-url');
+
+          const isLost = $(elem).find('.details .label-danger').text()
+            ? true
+            : false;
+
+          const song = {
+            url,
+            playId,
+          };
+
+          if (isLost) {
+            return {};
+          } else {
+            return song;
+          }
+        })
+        .get();
+      res.send(songs);
+    } else {
+    }
+  } catch (err) {
+    res.status(400).end();
+  }
+});
+
 const PORT = process.env.PORT || 1234;
 app.listen(PORT, () => console.log(`listening on ${PORT}`));
